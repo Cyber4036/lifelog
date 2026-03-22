@@ -123,28 +123,55 @@
     /* Textarea in form uses Newsreader */
     textarea.journal-text { font-family: 'Newsreader', serif; }
 
-    /* Dark mode colors */
-    .dark body { background-color: #161311; color: #E9E1DD; }
-    .dark .bg-surface   { background-color: #161311; }
-    .dark .bg-surface-container-low     { background-color: #1E1B19; }
-    .dark .bg-surface-container         { background-color: #221F1D; }
-    .dark .bg-surface-container-high    { background-color: #2A2725; }
-    .dark .bg-surface-container-highest { background-color: #383432; }
-    .dark .bg-surface-container-lowest  { background-color: #100E0C; }
-    .dark .text-primary    { color: #BCCBB5; }
-    .dark .text-on-surface { color: #E9E1DD; }
+    /* ── Header + mobile nav backgrounds (bypass Tailwind opacity-modifier issue) ── */
+    .header-bg  { background-color: rgba(252,249,244,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .mob-nav-bg { background-color: rgba(252,249,244,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+    /* Dark mode — layout surfaces */
+    .dark body,
+    .dark html                              { background-color: #161311; color: #E9E1DD; }
+    .dark .bg-surface                       { background-color: #161311 !important; }
+    .dark .bg-surface-container-low         { background-color: #1E1B19 !important; }
+    .dark .bg-surface-container             { background-color: #221F1D !important; }
+    .dark .bg-surface-container-high        { background-color: #2A2725 !important; }
+    .dark .bg-surface-container-highest     { background-color: #383432 !important; }
+    .dark .bg-surface-container-lowest      { background-color: #100E0C !important; }
+
+    /* Dark mode — header + bottom nav */
+    .dark .header-bg  { background-color: rgba(22,19,17,0.88); }
+    .dark .mob-nav-bg { background-color: rgba(22,19,17,0.95); border-top-color: rgba(68,72,65,0.25); }
+
+    /* Dark mode — typography */
+    .dark .text-primary            { color: #BCCBB5; }
+    .dark .text-on-surface         { color: #E9E1DD; }
     .dark .text-on-surface-variant { color: #C4C8BF; }
-    .dark .bg-primary      { background-color: #BCCBB5; }
-    .dark .text-on-primary { color: #223020; }
-    .dark .bg-secondary-container { background-color: #4F5D4B; }
+    .dark .text-outline            { color: #8C9188; }
+    .dark .text-secondary          { color: #A3C4A8; }
+    .dark .text-tertiary           { color: #F2A8A5; }
+    .dark .text-on-surface-variant\/60 { color: rgba(196,200,191,0.6); }
+
+    /* Dark mode — key backgrounds */
+    .dark .bg-primary              { background-color: #BCCBB5 !important; }
+    .dark .text-on-primary         { color: #1A2E1D; }
+    .dark .bg-secondary-container  { background-color: #3A4E3D !important; }
     .dark .text-on-secondary-container { color: #C8EBC8; }
-    .dark .bg-primary-container { background-color: #4F5D4B; }
+    .dark .bg-primary-container    { background-color: #3A4E3D !important; }
+    .dark .bg-error-container      { background-color: #4A1010 !important; }
+    .dark .text-error              { color: #F2A8A8; }
+
+    /* Dark mode — form inputs & selects */
+    .dark input, .dark textarea, .dark select {
+      background-color: #221F1D;
+      color: #E9E1DD;
+    }
+    .dark input::placeholder, .dark textarea::placeholder { color: rgba(196,200,191,0.45); }
+    .dark select option { background-color: #221F1D; color: #E9E1DD; }
 
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #d4c3be; border-radius: 3px; }
-    .dark ::-webkit-scrollbar-thumb { background: #444841; }
+    .dark ::-webkit-scrollbar-thumb { background: #4A4744; }
 
     /* Smooth view transitions */
     .view { animation: fadeIn 0.25s ease; }
@@ -152,6 +179,7 @@
 
     /* Quote image hero */
     .hero-banner { background: linear-gradient(135deg, #442a22 0%, #5d4037 100%); }
+    .dark .hero-banner { background: linear-gradient(135deg, #1E1512 0%, #2C2018 100%); }
   </style>
 </head>
 <body class="bg-surface font-body text-on-surface min-h-screen selection:bg-secondary-container selection:text-on-secondary-container">
@@ -209,7 +237,7 @@
     <main class="flex-1 flex flex-col min-w-0">
 
       <!-- ── Mobile / Top Header ── -->
-      <header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/10 md:border-0 md:bg-transparent">
+      <header class="sticky top-0 z-50 header-bg border-b border-outline-variant/10 md:border-0 md:bg-transparent">
         <div class="flex justify-between items-center px-5 py-4 md:px-10 md:py-5 max-w-5xl mx-auto w-full">
           <span class="font-headline font-bold text-primary text-xl md:text-2xl tracking-tight">Lifelog</span>
           <div class="flex items-center gap-3">
@@ -556,7 +584,7 @@
   </div><!-- /app shell -->
 
   <!-- ══════════════  MOBILE BOTTOM NAV  ══════════════ -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/10 px-4 py-2 flex justify-around items-center">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 mob-nav-bg border-t border-outline-variant/10 px-4 py-2 flex justify-around items-center">
 
     <a href="#" data-nav="dashboard" data-mob-nav="dashboard"
       class="mob-nav-active flex flex-col items-center gap-1 px-4 py-2 transition-colors duration-200">
