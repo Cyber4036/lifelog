@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Lifelog — A minimal PWA for quick daily check-ins and life logging."/>
+  <title>Lifelog — The Archivist</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#442a22"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&family=Manrope:wght@300..800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind with design tokens -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            /* Light theme — Arbor & Parchment */
+            'primary':                 '#442a22',
+            'on-primary':              '#ffffff',
+            'primary-container':       '#5d4037',
+            'on-primary-container':    '#d4ada1',
+            'secondary':               '#3a6843',
+            'on-secondary':            '#ffffff',
+            'secondary-container':     '#b9ecbd',
+            'on-secondary-container':  '#3e6d47',
+            'tertiary':                '#670512',
+            'on-tertiary':             '#ffffff',
+            'tertiary-container':      '#872026',
+            'error':                   '#ba1a1a',
+            'on-error':                '#ffffff',
+            'error-container':         '#ffdad6',
+            'on-error-container':      '#93000a',
+            'surface':                 '#fcf9f4',
+            'on-surface':              '#1c1c19',
+            'surface-variant':         '#e5e2dd',
+            'on-surface-variant':      '#504441',
+            'surface-dim':             '#dcdad5',
+            'surface-bright':          '#fcf9f4',
+            'surface-container-lowest':'#ffffff',
+            'surface-container-low':   '#f6f3ee',
+            'surface-container':       '#f0ede8',
+            'surface-container-high':  '#ebe8e3',
+            'surface-container-highest':'#e5e2dd',
+            'outline':                 '#827470',
+            'outline-variant':         '#d4c3be',
+            'inverse-surface':         '#31302d',
+            'inverse-on-surface':      '#f3f0eb',
+            'background':              '#fcf9f4',
+            'on-background':           '#1c1c19',
+          },
+          fontFamily: {
+            'headline': ['Newsreader', 'serif'],
+            'body':     ['Manrope', 'sans-serif'],
+            'label':    ['Manrope', 'sans-serif'],
+          },
+          borderRadius: {
+            'DEFAULT': '0.25rem',
+            'sm':      '0.125rem',
+            'md':      '0.375rem',
+            'lg':      '0.5rem',
+            'xl':      '0.75rem',
+            '2xl':     '1rem',
+            'full':    '9999px',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ── Custom / non-Tailwind styles ── */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      line-height: 1;
+    }
+
+    /* Paper grain texture */
+    .grain-overlay {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+    }
+
+    /* Custom range slider */
+    input[type="range"] { -webkit-appearance: none; background: transparent; width: 100%; }
+    input[type="range"]::-webkit-slider-runnable-track { background: #e5e2dd; height: 4px; border-radius: 2px; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%; background: #442a22; margin-top: -9px; cursor: pointer; box-shadow: 0 4px 10px rgba(68,42,34,0.15); }
+    input[type="range"]::-moz-range-track { background: #e5e2dd; height: 4px; border-radius: 2px; }
+    input[type="range"]::-moz-range-thumb { height: 22px; width: 22px; border-radius: 50%; background: #442a22; border: none; cursor: pointer; }
+
+    /* Dark mode grain */
+    .dark .grain-overlay { opacity: 0.04; }
+
+    /* Dark mode range */
+    .dark input[type="range"]::-webkit-slider-runnable-track { background: #383432; }
+    .dark input[type="range"]::-webkit-slider-thumb { background: #BCCBB5; }
+
+    /* Nav active / inactive */
+    .nav-active  { color: #442a22; font-weight: 700; background-color: #e5e2dd; }
+    .nav-inactive { color: #504441; }
+    .dark .nav-active  { color: #b9ecbd; background-color: #383432; }
+    .dark .nav-inactive { color: #9a8c88; }
+
+    /* Mobile nav active */
+    .mob-nav-active  .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .mob-nav-active  { color: #442a22; }
+    .dark .mob-nav-active { color: #BCCBB5; }
+
+    /* Smooth transitions */
+    * { transition-timing-function: cubic-bezier(0.4,0,0.2,1); }
+
+    /* Textarea in form uses Newsreader */
+    textarea.journal-text { font-family: 'Newsreader', serif; }
+
+    /* Dark mode colors */
+    .dark body { background-color: #161311; color: #E9E1DD; }
+    .dark .bg-surface   { background-color: #161311; }
+    .dark .bg-surface-container-low     { background-color: #1E1B19; }
+    .dark .bg-surface-container         { background-color: #221F1D; }
+    .dark .bg-surface-container-high    { background-color: #2A2725; }
+    .dark .bg-surface-container-highest { background-color: #383432; }
+    .dark .bg-surface-container-lowest  { background-color: #100E0C; }
+    .dark .text-primary    { color: #BCCBB5; }
+    .dark .text-on-surface { color: #E9E1DD; }
+    .dark .text-on-surface-variant { color: #C4C8BF; }
+    .dark .bg-primary      { background-color: #BCCBB5; }
+    .dark .text-on-primary { color: #223020; }
+    .dark .bg-secondary-container { background-color: #4F5D4B; }
+    .dark .text-on-secondary-container { color: #C8EBC8; }
+    .dark .bg-primary-container { background-color: #4F5D4B; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4c3be; border-radius: 3px; }
+    .dark ::-webkit-scrollbar-thumb { background: #444841; }
+
+    /* Smooth view transitions */
+    .view { animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* Quote image hero */
+    .hero-banner { background: linear-gradient(135deg, #442a22 0%, #5d4037 100%); }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen selection:bg-secondary-container selection:text-on-secondary-container">
+
+  <!-- Grain overlay -->
+  <div class="fixed inset-0 grain-overlay z-[100] pointer-events-none"></div>
+
+  <!-- ══════════════  APP SHELL  ══════════════ -->
+  <div class="flex min-h-screen">
+
+    <!-- ── Desktop Sidebar ── -->
+    <aside id="sidebar" class="hidden md:flex flex-col h-screen w-64 p-6 gap-8 bg-surface-container-low sticky top-0 shrink-0 z-40">
+      <div class="flex flex-col gap-0.5 mt-2">
+        <span class="font-headline text-2xl font-bold text-primary tracking-tight">The Archivist</span>
+        <span class="font-label text-xs tracking-[0.15em] uppercase font-semibold text-on-surface-variant opacity-60">Daily Lifelog</span>
+      </div>
+
+      <nav class="flex flex-col gap-1">
+        <a href="#" data-nav="dashboard" id="nav-desk-dashboard"
+           class="nav-active flex items-center gap-3 py-3 px-4 rounded-xl hover:translate-x-0.5 transition-all duration-300 ease-in-out">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="font-label text-sm tracking-wide uppercase font-semibold">Dashboard</span>
+        </a>
+        <a href="#" data-nav="new-log" id="nav-desk-new-log"
+           class="nav-inactive flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-surface-container hover:translate-x-0.5 transition-all duration-300 ease-in-out">
+          <span class="material-symbols-outlined">edit_note</span>
+          <span class="font-label text-sm tracking-wide uppercase font-semibold">New Log</span>
+        </a>
+        <a href="#" data-nav="history" id="nav-desk-history"
+           class="nav-inactive flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-surface-container hover:translate-x-0.5 transition-all duration-300 ease-in-out">
+          <span class="material-symbols-outlined">history</span>
+          <span class="font-label text-sm tracking-wide uppercase font-semibold">History</span>
+        </a>
+        <a href="#" data-nav="export" id="nav-desk-export"
+           class="nav-inactive flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-surface-container hover:translate-x-0.5 transition-all duration-300 ease-in-out">
+          <span class="material-symbols-outlined">file_export</span>
+          <span class="font-label text-sm tracking-wide uppercase font-semibold">Export</span>
+        </a>
+      </nav>
+
+      <div class="mt-auto flex flex-col gap-3">
+        <button data-nav="new-log"
+          class="w-full bg-primary text-on-primary py-4 px-6 rounded-full font-label font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all duration-300 shadow-lg shadow-primary/10">
+          <span class="material-symbols-outlined">add</span> New Entry
+        </button>
+        <button id="dark-mode-toggle"
+          class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors text-sm font-label">
+          <span class="material-symbols-outlined text-base">dark_mode</span>
+          <span>Toggle theme</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="flex-1 flex flex-col min-w-0">
+
+      <!-- ── Mobile / Top Header ── -->
+      <header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/10 md:border-0 md:bg-transparent">
+        <div class="flex justify-between items-center px-5 py-4 md:px-10 md:py-5 max-w-5xl mx-auto w-full">
+          <span class="font-headline font-bold text-primary text-xl md:text-2xl tracking-tight">Lifelog</span>
+          <div class="flex items-center gap-3">
+            <!-- Mobile dark toggle -->
+            <button id="dark-mode-toggle-mobile"
+              class="md:hidden p-2 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors">
+              <span class="material-symbols-outlined">dark_mode</span>
+            </button>
+            <!-- Tablet+ nav links -->
+            <nav class="hidden md:flex items-center gap-6">
+              <a href="#" data-nav="dashboard" class="text-on-surface-variant hover:text-primary transition-colors font-label text-sm font-semibold">Dashboard</a>
+              <a href="#" data-nav="new-log"   class="text-on-surface-variant hover:text-primary transition-colors font-label text-sm font-semibold">New Log</a>
+              <a href="#" data-nav="history"   class="text-on-surface-variant hover:text-primary transition-colors font-label text-sm font-semibold">History</a>
+              <a href="#" data-nav="export"    class="text-on-surface-variant hover:text-primary transition-colors font-label text-sm font-semibold">Export</a>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      <!-- ════════════════════════════════════════
+           VIEW: DASHBOARD
+      ════════════════════════════════════════ -->
+      <section id="view-dashboard" class="view flex-1 px-5 py-8 md:px-10 md:py-12 max-w-5xl mx-auto w-full pb-28 md:pb-12">
+
+        <!-- Hero greeting -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
+          <div>
+            <p class="font-headline italic text-on-surface-variant text-lg mb-1">Welcome back, Archivist.</p>
+            <h1 class="font-headline font-bold text-4xl md:text-5xl text-primary tracking-tight leading-none">Today is unfolding.</h1>
+          </div>
+          <!-- Last entry badge -->
+          <div id="last-entry-badge" class="bg-surface-container-high px-5 py-4 rounded-xl flex items-center gap-4 shrink-0">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+          <!-- New Entry CTA -->
+          <button data-nav="new-log"
+            class="md:col-span-4 min-h-[180px] p-8 rounded-xl group relative overflow-hidden flex flex-col justify-center items-center gap-4 text-white shadow-xl hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300"
+            style="background: linear-gradient(135deg, #442a22 0%, #5d4037 100%)">
+            <span class="material-symbols-outlined text-5xl relative z-10" style="font-variation-settings:'FILL' 1,'wght' 300">ink_pen</span>
+            <div class="text-center relative z-10">
+              <span class="font-headline text-2xl font-bold block">New Entry</span>
+              <span class="font-body text-sm opacity-70 block mt-0.5">Capture the moment</span>
+            </div>
+          </button>
+
+          <!-- Weekly activity -->
+          <div class="md:col-span-8 bg-surface-container-low p-6 md:p-8 rounded-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-secondary-container opacity-10 rounded-bl-full -mr-6 -mt-6"></div>
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="font-headline font-bold text-xl text-primary">Weekly Activity</h2>
+              <span class="font-label text-xs text-on-surface-variant uppercase tracking-widest">Past 7 Days</span>
+            </div>
+            <div id="weekly-grid" class="grid grid-cols-7 gap-2 md:gap-3">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Recent entries -->
+          <div class="md:col-span-12 bg-surface-container-highest p-6 md:p-8 rounded-xl">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="font-headline font-bold text-xl text-primary">Recent Entries</h2>
+              <a href="#" data-nav="history"
+                class="font-label text-xs uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+                View all <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+            </div>
+            <div id="dashboard-recent" class="flex flex-col gap-4">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Quote banner -->
+          <div class="md:col-span-12 hero-banner rounded-xl p-8 md:p-10 flex flex-col justify-center">
+            <h3 class="font-headline italic text-2xl md:text-3xl font-bold text-white/90 leading-snug">"Memory is the scribe of the soul."</h3>
+            <p class="font-label text-xs uppercase tracking-[0.2em] text-white/50 mt-3">— Aristotle</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════
+           VIEW: NEW LOG
+      ════════════════════════════════════════ -->
+      <section id="view-new-log" class="view hidden flex-1 px-5 py-8 md:px-10 md:py-12 max-w-3xl mx-auto w-full pb-28 md:pb-12">
+
+        <!-- Header -->
+        <header class="mb-10">
+          <span class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant opacity-60 block mb-2">New Entry</span>
+          <h1 class="font-headline italic text-4xl md:text-5xl text-primary leading-tight">Capturing the Moment</h1>
+          <div class="mt-5 flex items-center gap-3 bg-surface-container-low w-fit py-2 px-4 rounded-lg">
+            <span class="material-symbols-outlined text-outline" style="font-size:16px">schedule</span>
+            <code id="form-timestamp" class="font-body text-sm text-on-surface-variant tracking-tight"></code>
+          </div>
+        </header>
+
+        <form id="new-log-form" class="space-y-10 novalidate">
+
+          <!-- Planned -->
+          <div>
+            <label for="field-planned" class="font-label text-xs font-bold uppercase tracking-wider text-primary mb-3 block">
+              Planned <span class="opacity-40 italic font-normal normal-case">(optional)</span>
+            </label>
+            <textarea id="field-planned" name="planned" rows="3"
+              class="journal-text w-full bg-surface-container-highest border-none rounded-xl p-5 text-lg focus:ring-2 focus:ring-primary/20 transition-all placeholder:italic placeholder:opacity-30 resize-none"
+              placeholder="What did you plan or need to do?"></textarea>
+          </div>
+
+          <!-- Actual -->
+          <div>
+            <label for="field-actual" class="font-label text-xs font-bold uppercase tracking-wider text-primary mb-3 block">
+              Actual <span class="text-tertiary ml-1">*</span>
+            </label>
+            <textarea id="field-actual" name="actual" rows="3" required
+              class="journal-text w-full bg-surface-container-highest border-none rounded-xl p-5 text-lg focus:ring-2 focus:ring-primary/20 transition-all placeholder:italic placeholder:opacity-30 resize-none"
+              placeholder="What actually happened?"></textarea>
+          </div>
+
+          <!-- State -->
+          <div>
+            <label for="field-state" class="font-label text-xs font-bold uppercase tracking-wider text-primary mb-3 block">
+              State <span class="opacity-40 italic font-normal normal-case">(1–2 words, optional)</span>
+            </label>
+            <input id="field-state" name="state" type="text" maxlength="30"
+              class="w-full bg-surface-container-highest border-none rounded-xl p-5 font-body text-base focus:ring-2 focus:ring-primary/20 transition-all"
+              placeholder="e.g. Focused, Tired, Calm…"/>
+          </div>
+
+          <!-- Feelings section -->
+          <div class="bg-surface-container p-6 md:p-8 rounded-xl space-y-8">
+
+            <!-- Feeling picker -->
+            <div>
+              <label class="font-label text-xs font-bold uppercase tracking-wider text-primary mb-5 block">Primary Feeling</label>
+              <div id="feeling-buttons" class="grid grid-cols-4 sm:grid-cols-8 gap-2 md:gap-3">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+
+            <!-- Intensity slider -->
+            <div>
+              <div class="flex justify-between items-center mb-4">
+                <label for="field-intensity" class="font-label text-xs font-bold uppercase tracking-wider text-primary">Feeling Intensity</label>
+                <span id="intensity-label" class="font-headline italic text-base text-primary">Moderate (3)</span>
+              </div>
+              <input id="field-intensity" name="intensity" type="range" min="1" max="5" step="1" value="3"/>
+              <div class="flex justify-between mt-2 px-0.5">
+                <span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest opacity-40">Subtle</span>
+                <span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest opacity-40">Overwhelming</span>
+              </div>
+            </div>
+
+            <!-- Feeling note -->
+            <div>
+              <label for="field-feeling-note" class="font-label text-xs font-bold uppercase tracking-wider text-primary mb-3 block">
+                Feeling Note <span class="opacity-40 italic font-normal normal-case">(optional)</span>
+              </label>
+              <input id="field-feeling-note" name="feeling_note" type="text"
+                class="w-full bg-surface-container-highest border-none rounded-xl p-4 font-body text-base focus:ring-2 focus:ring-primary/20 transition-all"
+                placeholder="Why do you feel this way?"/>
+            </div>
+          </div>
+
+          <!-- General notes -->
+          <div>
+            <label for="field-notes" class="font-label text-xs font-bold uppercase tracking-wider text-primary mb-3 block">
+              General Notes <span class="opacity-40 italic font-normal normal-case">(optional)</span>
+            </label>
+            <textarea id="field-notes" name="notes" rows="4"
+              class="w-full bg-surface-container-low border border-outline-variant/20 rounded-xl p-5 font-body text-base focus:ring-2 focus:ring-primary/20 transition-all placeholder:italic placeholder:opacity-30 resize-none"
+              placeholder="Any other observations or stray thoughts…"></textarea>
+          </div>
+
+          <!-- Submit -->
+          <footer class="pt-6 border-t border-outline-variant/10 flex flex-col sm:flex-row items-center justify-between gap-5">
+            <p class="text-sm italic text-on-surface-variant max-w-xs opacity-60">
+              This entry will be sealed in your local archive.
+            </p>
+            <button type="submit"
+              class="bg-primary text-on-primary px-10 py-4 rounded-full font-label font-bold uppercase tracking-widest text-sm shadow-xl hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+              <span class="material-symbols-outlined" style="font-size:20px">auto_stories</span>
+              Save Entry
+            </button>
+          </footer>
+        </form>
+      </section>
+
+      <!-- ════════════════════════════════════════
+           VIEW: HISTORY
+      ════════════════════════════════════════ -->
+      <section id="view-history" class="view hidden flex-1 px-5 py-8 md:px-10 md:py-12 max-w-5xl mx-auto w-full pb-28 md:pb-12">
+
+        <header class="mb-8">
+          <h1 class="font-headline text-4xl md:text-5xl text-primary italic mb-2">The Ledger</h1>
+          <p class="text-on-surface-variant max-w-lg font-body">A chronological account of your intentions, actions, and the emotional resonance of your time.</p>
+        </header>
+
+        <!-- Filters -->
+        <div class="bg-surface-container-low rounded-xl p-5 mb-10 flex flex-col sm:flex-row gap-4 items-end">
+          <div class="flex-1 w-full space-y-2">
+            <label for="history-search" class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold block">Search</label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" style="font-size:18px">search</span>
+              <input id="history-search" type="text"
+                class="w-full bg-surface-container-lowest border-none rounded-lg pl-11 pr-4 py-3 font-headline italic text-base focus:ring-2 focus:ring-primary/20 transition-all"
+                placeholder="Search entries…"/>
+            </div>
+          </div>
+          <div class="w-full sm:w-48 space-y-2">
+            <label for="history-feeling-filter" class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold block">Feeling</label>
+            <select id="history-feeling-filter"
+              class="w-full bg-surface-container-lowest border-none rounded-lg py-3 px-4 font-label text-sm focus:ring-2 focus:ring-primary/20 transition-all">
+              <option value="all">All Feelings</option>
+              <option value="calm">Calm</option>
+              <option value="focused">Focused</option>
+              <option value="joyful">Joyful</option>
+              <option value="anxious">Anxious</option>
+              <option value="frustrated">Frustrated</option>
+              <option value="tired">Tired</option>
+              <option value="neutral">Neutral</option>
+              <option value="serene">Serene</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Entry feed -->
+        <div id="history-feed" class="flex flex-col gap-8">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- End marker -->
+        <div class="mt-16 py-10 border-t border-outline-variant/10 flex flex-col items-center text-center opacity-30">
+          <span class="material-symbols-outlined text-3xl mb-3">ink_pen</span>
+          <p class="font-headline italic text-lg">End of archive chapter.</p>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════
+           VIEW: EXPORT
+      ════════════════════════════════════════ -->
+      <section id="view-export" class="view hidden flex-1 px-5 py-8 md:px-10 md:py-12 max-w-5xl mx-auto w-full pb-28 md:pb-12">
+
+        <header class="mb-10">
+          <h1 class="font-headline text-4xl md:text-5xl font-bold text-primary italic tracking-tight mb-3">Data &amp; Export</h1>
+          <p class="text-on-surface-variant font-body max-w-2xl text-base leading-relaxed">
+            Your archive is yours alone. Export your history at any time in any format that works best for deeper analysis.
+          </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          <!-- Export panel -->
+          <div class="lg:col-span-8 bg-surface-container-low rounded-xl p-8 space-y-8">
+            <div>
+              <h2 class="font-headline text-2xl font-bold text-primary mb-1">Export Records</h2>
+              <p class="text-sm text-on-surface-variant italic">Select your preferred format for the journey ahead.</p>
+            </div>
+
+            <!-- Format buttons -->
+            <div class="space-y-3">
+              <label class="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant">Format</label>
+              <div class="flex flex-wrap gap-3">
+                <button id="btn-export-json"
+                  class="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">data_object</span> JSON
+                </button>
+                <button id="btn-export-csv"
+                  class="px-5 py-2.5 rounded-lg bg-surface-container-highest text-primary font-label font-bold text-sm hover:bg-outline-variant/20 active:scale-[0.97] transition-all flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">table_chart</span> CSV
+                </button>
+                <button id="btn-export-md"
+                  class="px-5 py-2.5 rounded-lg bg-surface-container-highest text-primary font-label font-bold text-sm hover:bg-outline-variant/20 active:scale-[0.97] transition-all flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">description</span> Markdown
+                </button>
+              </div>
+            </div>
+
+            <!-- Summary card -->
+            <div class="bg-surface-container-lowest/60 p-6 rounded-xl border border-outline-variant/10">
+              <div class="flex gap-4 items-start">
+                <span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings:'FILL' 1">inventory_2</span>
+                <div>
+                  <h4 class="font-headline text-lg font-bold text-primary mb-1">Export Summary</h4>
+                  <p id="export-stats" class="text-sm text-on-surface-variant leading-relaxed">
+                    Loading…
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Privacy + Stats -->
+          <div class="lg:col-span-4 space-y-5">
+
+            <!-- Privacy -->
+            <div class="bg-surface-container rounded-xl p-6 space-y-4">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1">lock</span>
+                <h3 class="font-headline text-lg font-bold text-primary">Privacy Shield</h3>
+              </div>
+              <div class="flex items-start gap-3 py-3 border-t border-outline-variant/10">
+                <span class="material-symbols-outlined text-secondary text-xl mt-0.5" style="font-variation-settings:'FILL' 1">check_circle</span>
+                <div>
+                  <p class="font-label text-sm font-bold text-primary">Local-Only Storage</p>
+                  <p class="font-label text-xs text-on-surface-variant">No data leaves this device</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 py-3 border-t border-outline-variant/10">
+                <span class="material-symbols-outlined text-secondary text-xl mt-0.5" style="font-variation-settings:'FILL' 1">offline_bolt</span>
+                <div>
+                  <p class="font-label text-sm font-bold text-primary">Works Offline</p>
+                  <p class="font-label text-xs text-on-surface-variant">Service Worker enabled</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="bg-surface-container-high rounded-xl p-6">
+              <h3 class="font-headline text-lg font-bold text-primary mb-4">Storage Stats</h3>
+              <div class="flex flex-col gap-3">
+                <div>
+                  <p class="font-label text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Last Export</p>
+                  <p id="last-export-date" class="font-headline text-xl text-primary italic">Never</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Footer quote -->
+        <div class="mt-12 pt-8 border-t border-outline-variant/10">
+          <p class="text-xs text-on-surface-variant italic text-right max-w-xs ml-auto">
+            "The past is a foreign country; they do things differently there."
+            <span class="block font-bold not-italic mt-1">— L.P. Hartley</span>
+          </p>
+        </div>
+      </section>
+
+    </main><!-- /main -->
+  </div><!-- /app shell -->
+
+  <!-- ══════════════  MOBILE BOTTOM NAV  ══════════════ -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/10 px-4 py-2 flex justify-around items-center">
+
+    <a href="#" data-nav="dashboard" data-mob-nav="dashboard"
+      class="mob-nav-active flex flex-col items-center gap-1 px-4 py-2 transition-colors duration-200">
+      <span class="material-symbols-outlined text-xl">dashboard</span>
+      <span class="font-label text-[10px] uppercase font-bold tracking-tighter">Home</span>
+    </a>
+
+    <!-- FAB -->
+    <div class="relative -top-5">
+      <button data-nav="new-log"
+        class="bg-primary text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/25 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-3xl">add</span>
+      </button>
+    </div>
+
+    <a href="#" data-nav="history" data-mob-nav="history"
+      class="flex flex-col items-center gap-1 px-4 py-2 text-on-surface-variant transition-colors duration-200">
+      <span class="material-symbols-outlined text-xl">history</span>
+      <span class="font-label text-[10px] uppercase font-medium tracking-tighter">History</span>
+    </a>
+
+    <a href="#" data-nav="export" data-mob-nav="export"
+      class="flex flex-col items-center gap-1 px-4 py-2 text-on-surface-variant transition-colors duration-200">
+      <span class="material-symbols-outlined text-xl">file_export</span>
+      <span class="font-label text-[10px] uppercase font-medium tracking-tighter">Export</span>
+    </a>
+  </nav>
+
+  <script src="/app.js"></script>
+
+  <!-- Mobile dark toggle wiring (mirrors desktop button) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobileToggle = document.getElementById('dark-mode-toggle-mobile');
+      if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+          document.getElementById('dark-mode-toggle').click();
+          // Sync icon
+          const icon = mobileToggle.querySelector('.material-symbols-outlined');
+          if (icon) icon.textContent = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+        });
+        // Initial icon
+        const icon = mobileToggle.querySelector('.material-symbols-outlined');
+        if (icon) icon.textContent = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
+      }
+
+      // Mobile nav active state management
+      document.querySelectorAll('[data-nav]').forEach(el => {
+        el.addEventListener('click', () => {
+          const nav = el.dataset.nav;
+          // Mobile bottom nav highlight
+          document.querySelectorAll('[data-mob-nav]').forEach(mob => {
+            mob.classList.toggle('mob-nav-active', mob.dataset.mobNav === nav);
+            mob.classList.toggle('text-on-surface-variant', mob.dataset.mobNav !== nav);
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>
